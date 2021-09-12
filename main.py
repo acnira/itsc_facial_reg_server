@@ -1,4 +1,5 @@
 from threading import Thread, Condition, Timer
+import sklearn
 import time
 import serial
 import os, sys
@@ -17,7 +18,7 @@ import config
 import new_db_handler
 #from verification import *
 from new_verification import *
-from qrcodedetect import *
+from detectors import *
 from webcam import *
 from relay import *
 from card import *
@@ -33,8 +34,8 @@ def main():
     # db.table_create()
     # db.delete_by_eppn("ccandrew@ust.hk")
     # db.insert_andrew()
-    # db.delete_by_eppn('haha@ust.hk')
-    # db.insert_user('haha@ust.hk', 'jenny', '12345678', '01234567', '12345678', '4321', 'Y', 'N', '')
+    # db.delete_by_eppn('nlimarsha@connect.ust.hk')
+    # db.insert_user('nlimarsha@connect.ust.hk', 'Nicho', '12345678', '01234567', '12345678', '4321', 'Y', 'N', '')
     db.get_all()
     db.close()
     

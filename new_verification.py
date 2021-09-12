@@ -4,7 +4,6 @@ import datetime
 import config
 import cv2
 import tkinter as tk
-#from win32api import GetSystemMetrics
 # Verification functions against DB records
 
 def check_qrcode(data):
@@ -52,6 +51,24 @@ def check_pin(eppn, pin):
     config.padON = False
     if r and r['pin'] == pin:
         config.user_eppn = r['eppn']
+        show_access()  
+        return r
+    return False
+
+def check_face(eppn):
+    r = config.dbc.get_by_eppn(eppn)
+    if r and r['eppn'] == eppn:
+        # A person can only entered once in one minute
+        if(r['lastAccessTime']!=''):
+            current = datetime.datetime.strptime(time.ctime(), "%a %b %d %H:%M:%S %Y")
+            last= datetime.datetime.strptime(r['lastAccessTime'], "%a %b %d %H:%M:%S %Y")
+            diff = current.timestamp()-last.timestamp()
+            if (diff < 60):
+                print("You have entered in the past one minute")                
+                return False
+        r = config.dba.update_time_by_eppn(eppn)
+        config.user_eppn = r['eppn']
+        config.relay.signal("Face")
         show_access()  
         return r
     return False

@@ -634,5 +634,3 @@ def test1():  # for DB testing only
 
 if __name__ == '__main__':
     main()
-
-

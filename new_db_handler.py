@@ -80,6 +80,17 @@ class Userdb:
         # print(row['eppn'],row['studentID'],row['cardID'],row['qrCode'],row['pin'],row['name'],row['lastAccessTime'])
         return row;
 
+    def update_time_by_eppn(self, eppn):
+        # Update time
+        self.cursor.execute('UPDATE user SET lastAccessTime ="'+ time.ctime() + '" WHERE eppn = "' + eppn + '";')
+        self.dbconnect.commit();
+        # Print the updated result for debug
+        self.cursor.execute('SELECT * FROM user WHERE eppn = "' + eppn + '";')
+        data = list(self.cursor)
+        row =  data[0]
+        print(row['eppn'],row['studentID'],row['cardID'],row['qrCode'],row['pin'],row['name'],row['lastAccessTime'])
+        return row
+
     def update_time_by_cardID(self, cardID):
         # Update time
         self.cursor.execute('UPDATE user SET lastAccessTime ="'+ time.ctime() + '" WHERE cardID = "' + cardID + '";')

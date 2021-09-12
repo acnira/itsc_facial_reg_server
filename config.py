@@ -28,3 +28,15 @@ bellsound = None
 user_eppn = ''
 point = None
 offsetx = None
+
+#detection
+camshape = None
+
+#recognition
+clf = None
+clf_model = None
+num_encode = None 
+dbhC = None
+encode_model = None
+f_face_thres = None
+faceAuthorized = False

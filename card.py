@@ -6,7 +6,6 @@ import time
 #from db_handler import Userdb
 from new_verification import check_card
 from new_db_handler import Userdb
-# from screen import show_access
 #The method is called whenever you place a NFC tag on the reader.
 
 def handleTag(tag):
@@ -17,7 +16,6 @@ def handleTag(tag):
   return False
 
 def gotTag():
-
     if check_card(config.uid):
         if config.cardOnly:
             config.relay.signal("card")    # relay_on()           
@@ -30,7 +28,6 @@ def gotTag():
     return False
 
 # The Card Thread
-
 def card():
     oCLF = nfc.ContactlessFrontend()
     #Insert the device address here (e.g. "tty:S0"). Note the ":" after "tty"

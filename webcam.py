@@ -5,14 +5,27 @@ import time
 from qrcodedetect import scan_code
 from new_db_handler import Userdb
 from screen import click
-from facedetect import *
+from detectors import *
+from retinaface import RetinaFace
+from face_model import FaceModel
+# from imutils_face_align_new import align_pics
 
+
+# Recognition functions
+from clf_new import knn_model
+config.clf_model = knn_model
+
+class FaceModelParam:
+    def __init__(self, gpu=0, img_size='112,112', model='/home/itsc/insightface/models/r100-arcface-emore/model,1',
+                 ga_model='', threshold=1.2, det=0):
+        self.gpu = gpu
+        self.image_size = img_size
+        self.model = model
+        self.ga_model = ga_model
+        self.threshold = threshold
+        self.det = det
 
 def show_webcam(mirror=False):
-
-    cascPath = "./haarcascade_frontalface_default.xml"
-    faceCascade = cv2.CascadeClassifier(cascPath)
-
     # RP4
     # cam = cv2.VideoCapture(0)
     # cam.set(cv2.CAP_PROP_BUFFERSIZE,1)
@@ -22,7 +35,7 @@ def show_webcam(mirror=False):
     #            "video/x-raw, width=(int){}, height=(int){}, framerate=30/1, format=(string)YUY2 ! "
     #            "videoconvert ! video/x-raw, format=BGR ! appsink drop=1").format(640, 480)
     # cam = cv2.VideoCapture(gst_str, cv2.CAP_GSTREAMER)
-    cam= cv2.VideoCapture('/dev/video0')
+    cam= cv2.VideoCapture('/dev/video0', cv2.CAP_V4L2)
     cam.set(cv2.CAP_PROP_FPS, 30)
     
     # gst-launch-1.0 -v v4l2src device=/dev/video0 ! video/x-raw, width=640, height=480, framerate=30/1, format=YUY2 ! videoconvert ! xvimagesink
@@ -32,10 +45,30 @@ def show_webcam(mirror=False):
     set_full('webcam')
     cv2.setMouseCallback("webcam", click)
     config.dbc = Userdb()
+    # QR detector
+    qr_detector = cv2.QRCodeDetector()
+    # Face detector
+    # using GPU front face detector
+    gpuid = 0
+    retina_model = '/home/itsc/insightface/RetinaFace/model/R50'
+    # Absolute path of the face detector model
+    face_detector = RetinaFace(retina_model, 0, gpuid, 'net3')
+    
+    get_db_clf()
+    param = FaceModelParam()
+    config.encode_model = FaceModel(param)
+
     while not config.done:
         try:
-            ret_val, img = cam.read()           
-            img = scan_code(img)
+            ret_val, img = cam.read()        
+            config.camshape = img.shape
+            # detect QR
+            # img = scan_code(img, qr_detector)
+            # detect face
+            # img = scan_face(img, face_detector)
+            # detect both QR and face
+            img = detect_qr_face(img, qr_detector, face_detector)
+
             if mirror: 
                 img = cv2.flip(img, 1)
             img1 = make_blank()
@@ -133,12 +166,10 @@ def showPin(img):
     cv2.startWindowThread()
     #cv2.setWindowProperty ('showPin', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
     #root = tk.Tk()
-
     bg = cv2.imread("gray.jpg")      
     bg = cv2.resize(bg,(230, 40))
     #w,h,c = image.shape
     #image = cv2.copyMakeBorder( image, int((sh-h)/2), int((sh-h)/2), int((sw-w)/2), int((sw-w)/2), 0)
-
     cv2.imshow('showPin', bg)
     #time.sleep(1)
     #config.pauseCamera = False
