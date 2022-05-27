@@ -1,3 +1,4 @@
+import base64
 import json
 from urllib.request import Request, urlopen
 import requests
@@ -21,7 +22,15 @@ def ws_client(url, method=None, data=None, files=None):
 
 
 if __name__ == "__main__":
-    files = [('face_images', open('face1.jpg', 'rb')), ('face_images', open('face2.jpg', 'rb'))]
+    im1 = None
+    im2 = None
+    with open('face1.jpg', "rb") as f:
+        im_bytes = f.read()
+        im_1 = base64.b64encode(im_bytes).decode("utf8")
+    with open('face2.jpg', "rb") as f:
+        im_bytes = f.read()
+        im_2 = base64.b64encode(im_bytes).decode("utf8")
+    files = [('face_images', im_1), ('face_images', im_2)]
     data = {'eppn': 'example.connect.ust.hk'}
     res=requests.post(f"http://{SERVER}/register",files=files, data=data)
     print(res.status_code)

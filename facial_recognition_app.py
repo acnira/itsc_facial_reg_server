@@ -1,12 +1,14 @@
+import base64
 import os
 import sys
 
 import cv2
+import numpy as np
 
 import DB_Handler_dict
 from flask import Flask, render_template, request, jsonify
 
-from det22a import print_log
+from config import clf
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'insightface', 'alignment'))
 from imutils_face_align_new import align_pic_new, align_pics, face_rect
@@ -45,13 +47,12 @@ def foo():
         print("ERR: ", ex)
         return generate_res({"error": str(ex)}), 400
 
-
 @app.route('/register', methods=['POST'])
 def register():
     try:
         print("registering user")
         uploaded_files = request.files.getlist("face_images")
-        data = request.form
+        data = request.form.decode('utf-8')
         eppn = data.get("eppn")
         print("eppn: ", eppn, " with ", len(uploaded_files), " images")
         if len(uploaded_files) == 0:
@@ -59,8 +60,14 @@ def register():
         if eppn is None:
             raise Exception("must have eppn")
         print("inserting to db")
-        for img in uploaded_files:
-            db.insert_encode(eppn, img)
+        for imgJson in uploaded_files:
+            image_dec = base64.b64decode(imgJson)
+            data_np = np.fromstring(image_dec, dtype='uint8')
+            img = cv2.imdecode(data_np, 1)
+            modelImg = encode_model.get_input(img)
+            if modelImg is None: return None
+            faces_encodings = [encode_model.get_feature(modelImg)]
+            db.insert_encode(eppn, faces_encodings[0])
         return generate_res("registration success"), 200
 
     except Exception as ex:
@@ -94,9 +101,8 @@ class FaceModelParam:
         self.threshold = threshold
         self.det = det
 
-
-if __name__ == '__main__':
-    #for testing
+def init_encode():
+    global encode_model, f_face_thres
     param = FaceModelParam()
     # preload an image to speed up the alignment and encoding later
     print('preloading an image to improve performance...')
@@ -113,15 +119,21 @@ if __name__ == '__main__':
     img1 = img[:,:,::-1]
     f_location = face_rect(img1, f_face_thres)
     if not f_location:    # empty => no large enough face found
-        print_log("Init Failure: face_rect()")
-    else:
-        print("face location: ", f_location)
+        print("Init Failure: face_rect()")
+        return
     try:
         top, right, bottom, left = f_location
         crop_img = img[top:bottom, left:right]
+        print("Start Init Predict predict")
+        result = clf.predict(crop_img, encode_model = encode_model)
+        print("++++++++++================= {} after predict")
     except:
-        print_log("Init Failure: Liveness Process")
-        exit()
+        print("Init Failure: clf.predict()")
+        return
+    print("Init Successfully")
+
+if __name__ == '__main__':
+    init_encode()
 
 
 
