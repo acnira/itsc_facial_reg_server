@@ -10,14 +10,15 @@ from flask import Flask, render_template, request, jsonify
 
 from config import clf
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'insightface', 'alignment'))
-from imutils_face_align_new import align_pic_new, align_pics, face_rect
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'insightface', 'deploy'))
-from face_model import FaceModel
+#sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'insightface', 'alignment'))
+#from imutils_face_align_new import align_pic_new, align_pics, face_rect
+#sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'insightface', 'deploy'))
+#from face_model import FaceModel
 import json
 
 app = Flask(__name__)
 db = DB_Handler_dict.Database_Handler()
+demo = True
 
 global encode_model, f_face_thres
 
@@ -60,14 +61,15 @@ def register():
         if eppn is None:
             raise Exception("must have eppn")
         print("inserting to db")
-        for imgJson in uploaded_files:
-            image_dec = base64.b64decode(imgJson)
-            data_np = np.fromstring(image_dec, dtype='uint8')
-            img = cv2.imdecode(data_np, 1)
-            modelImg = encode_model.get_input(img)
-            if modelImg is None: return None
-            faces_encodings = [encode_model.get_feature(modelImg)]
-            db.insert_encode(eppn, faces_encodings[0])
+        if not demo:
+            for imgJson in uploaded_files:
+                image_dec = base64.b64decode(imgJson)
+                data_np = np.fromstring(image_dec, dtype='uint8')
+                img = cv2.imdecode(data_np, 1)
+                modelImg = encode_model.get_input(img)
+                if modelImg is None: return None
+                faces_encodings = [encode_model.get_feature(modelImg)]
+                db.insert_encode(eppn, faces_encodings[0])
         return generate_res("registration success"), 200
 
     except Exception as ex:
@@ -132,9 +134,10 @@ def init_encode():
         return
     print("Init Successfully")
 
+from requests import get
 if __name__ == '__main__':
-    init_encode()
-
-
-
+    if not demo:
+        init_encode()
+    ip = get('https://api.ipify.org').text
+    print("starting server at public ip: ", ip)
     app.run('0.0.0.0', port=18080, debug=False)
