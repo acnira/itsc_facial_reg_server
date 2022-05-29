@@ -53,7 +53,7 @@ def register():
     try:
         print("registering user")
         uploaded_files = request.files.getlist("face_images")
-        data = request.form.decode('utf-8')
+        data = request.form
         eppn = data.get("eppn")
         print("eppn: ", eppn, " with ", len(uploaded_files), " images")
         if len(uploaded_files) == 0:
