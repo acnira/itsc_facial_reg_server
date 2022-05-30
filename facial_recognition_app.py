@@ -10,9 +10,9 @@ from flask import Flask, render_template, request, jsonify
 
 from config import clf
 
-#sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'insightface', 'alignment'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'insightface', 'alignment'))
 #from imutils_face_align_new import align_pic_new, align_pics, face_rect
-#sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'insightface', 'deploy'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'insightface', 'deploy'))
 #from face_model import FaceModel
 import json
 
@@ -60,16 +60,22 @@ def register():
             raise Exception("number of images must greater than 0")
         if eppn is None:
             raise Exception("must have eppn")
-        print("inserting to db")
         if not demo:
-            for imgJson in uploaded_files:
-                image_dec = base64.b64decode(imgJson)
+            for img in uploaded_files:
+                print("inserting to db")
+                img = img.read()
+                image_dec = base64.b64decode(img)
                 data_np = np.fromstring(image_dec, dtype='uint8')
                 img = cv2.imdecode(data_np, 1)
                 modelImg = encode_model.get_input(img)
                 if modelImg is None: return None
                 faces_encodings = [encode_model.get_feature(modelImg)]
                 db.insert_encode(eppn, faces_encodings[0])
+        else:
+            print("recieved ", len(uploaded_files), " files: ")
+            for img in uploaded_files:
+                print(img)
+            print("content of the first file: (in base 64)\n", base64.b64decode(uploaded_files[0].read()))
         return generate_res("registration success"), 200
 
     except Exception as ex:
